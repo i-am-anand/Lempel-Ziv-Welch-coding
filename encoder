@@ -1,0 +1,107 @@
+#include<stdio.h>
+
+#define MAXSIZE 64
+
+struct dict
+{
+	char *phrase;
+	unsigned int length;
+}LZWDictionary[MAXSIZE];
+
+ // char input_string[] = "TOBEORNOTTOBEORTOBEORNOT#";
+/* char input_string[] = "LIGHT/THE/LIGHT/WHICH/IS/RIGHT/FOR/SIGHT#";*/
+
+char input_string[] = "KNEW$NEW$NEWS#";
+
+unsigned int initdictionary();
+unsigned int longest_match(unsigned int, unsigned int);
+void disp_record(unsigned int);
+unsigned int insert_record(unsigned int, unsigned int, unsigned int *);
+
+int main(void)
+{
+
+	unsigned int nextAvailLoc = 0, next_char = 0, fixed_code, chno = 0;
+
+	nextAvailLoc = initdictionary();
+
+	while(1)
+	{
+		fixed_code = longest_match(next_char, nextAvailLoc);
+
+		nextAvailLoc = insert_record(fixed_code, nextAvailLoc, &next_char);
+		disp_record(nextAvailLoc-1);
+
+		if(input_string[next_char] == '#')
+				break;
+	}
+	return 0;
+}
+
+unsigned int initdictionary()
+{
+	unsigned int loc = 1, cno=0;;
+
+	LZWDictionary[0].phrase = (char *) malloc(1);
+	*(LZWDictionary[0].phrase) = '#';
+	LZWDictionary[0].length = 1;
+	LZWDictionary[1].phrase = (char *) malloc(1);
+	*(LZWDictionary[1].phrase) = '$';
+	LZWDictionary[1].length = 1;
+
+
+	disp_record(0);
+	disp_record(1);
+
+	for (loc = 2; loc<28; loc++)
+	{
+		LZWDictionary[loc].phrase = (char *) malloc(1);
+		*(LZWDictionary[loc].phrase) = (char) (loc + 63);
+		LZWDictionary[loc].length = 1;
+		disp_record(loc);
+	}
+	return loc;
+}
+
+unsigned int longest_match(unsigned int nc, unsigned int upto)
+{
+	unsigned int rn = 0, mf = 0, mflen = 0, cno = 0;
+
+	for(rn = 0; rn < upto; rn++)
+	{
+		for(cno = 0; cno < LZWDictionary[rn].length; cno++)
+			if( *(LZWDictionary[rn].phrase + cno) != input_string[nc + cno])
+				break;
+		if(cno == LZWDictionary[rn].length && cno > mflen)
+		{
+			mflen = cno;
+			mf = rn;
+		}
+	}
+
+	return(mf);
+
+}
+
+void disp_record(unsigned int rn)
+{
+	unsigned int cno = 0;
+	printf("%d\t", rn);
+	for(cno = 0; cno < LZWDictionary[rn].length; cno++)
+		printf("%c", *(LZWDictionary[rn].phrase + cno));
+	printf("\t%d\n", LZWDictionary[rn].length);
+}
+
+unsigned int insert_record(unsigned int mt, unsigned int wh, unsigned int *nc)
+{
+	unsigned int chno = 0;
+
+	LZWDictionary[wh].phrase = (char *) malloc(LZWDictionary[mt].length + 1);
+	for(chno = 0; chno < LZWDictionary[mt].length; chno ++)
+		*(LZWDictionary[wh].phrase + chno) = *(LZWDictionary[mt].phrase + chno);
+	*(LZWDictionary[wh].phrase + chno) = input_string[*nc + LZWDictionary[mt].length];
+	*nc = *nc + LZWDictionary[mt].length;
+	LZWDictionary[wh].length = LZWDictionary[mt].length + 1;
+
+	return(wh + 1);
+}
